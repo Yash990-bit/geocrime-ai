@@ -13,3 +13,13 @@ class PredictionResponse(BaseModel):
     
 class HotspotResponse(BaseModel):
     clusters: List[dict]
+
+class AnalyticsResponse(BaseModel):
+    hourly_trends: List[dict]
+    crime_types: List[dict]
+    daily_trends: List[dict]
+
+class FilterRequest(BaseModel):
+    crime_type: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

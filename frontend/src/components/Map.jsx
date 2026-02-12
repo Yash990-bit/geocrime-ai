@@ -65,32 +65,31 @@ const HotspotLayer = ({ data }) => {
     );
 }
 
-const MapComponent = () => {
-    const [heatmapData, setHeatmapData] = useState([]);
+const MapComponent = ({ heatmapData }) => {
     const [hotspots, setHotspots] = useState([]);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchHotspots = async () => {
             try {
-                const heatRes = await axios.get('http://localhost:8000/api/heatmap-data');
-                setHeatmapData(heatRes.data);
-
                 const hotRes = await axios.get('http://localhost:8000/api/hotspots');
                 setHotspots(hotRes.data.clusters);
             } catch (error) {
-                console.error("Error fetching map data:", error);
+                console.error("Error fetching hotspots:", error);
             }
         };
-        fetchData();
+        fetchHotspots();
     }, []);
 
+    // Ensure heatmapData is valid
+    const safeHeatmapData = heatmapData || [];
+
     return (
-        <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '500px', width: '100%' }}>
+        <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '100%', width: '100%' }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <HeatmapLayer data={heatmapData} />
+            <HeatmapLayer data={safeHeatmapData} />
             <HotspotLayer data={hotspots} />
         </MapContainer>
     );

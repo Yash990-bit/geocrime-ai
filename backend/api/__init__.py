@@ -60,9 +60,55 @@ def get_hotspots():
     return {"clusters": result.to_dict(orient="records")}
 
 @router.get("/heatmap-data")
-def get_heatmap_data():
-    """Return all points for heatmap"""
+def get_heatmap_data(
+    crime_type: str = None,
+    start_date: str = None,
+    end_date: str = None
+):
+    """Return filtered points for heatmap"""
     if clustered_data.empty:
         return []
+    
+    df = clustered_data.copy()
+    
+    # Apply filters
+    if crime_type and crime_type != "All":
+        df = df[df["crime_type"] == crime_type]
         
-    return clustered_data[["latitude", "longitude", "severity"]].to_dict(orient="records")
+    if start_date:
+        df = df[df["date"] >= start_date]
+        
+    if end_date:
+        df = df[df["date"] <= end_date]
+        
+    return df[["latitude", "longitude", "severity"]].to_dict(orient="records")
+
+@router.get("/analytics")
+def get_analytics():
+    """Return aggregated crime statistics"""
+    if clustered_data.empty:
+        return {}
+        
+    df = clustered_data.copy()
+    df['date'] = pd.to_datetime(df['date'])
+    
+    # 1. Hourly Trends
+    df['hour'] = df['date'].dt.hour
+    hourly = df.groupby('hour').size().reset_index(name='count')
+    
+    # 2. Crime Types
+    types = df['crime_type'].value_counts().reset_index()
+    types.columns = ['type', 'count']
+    
+    # 3. Daily Trends (Day of Week)
+    df['day'] = df['date'].dt.day_name()
+    # Sort by day order
+    days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    daily = df['day'].value_counts().reindex(days_order).reset_index()
+    daily.columns = ['day', 'count']
+    
+    return {
+        "hourly_trends": hourly.to_dict(orient="records"),
+        "crime_types": types.to_dict(orient="records"),
+        "daily_trends": daily.to_dict(orient="records")
+    }
