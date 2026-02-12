@@ -5,6 +5,7 @@ Downloads and loads crime data from NCRB (National Crime Records Bureau)
 
 import os
 import pandas as pd
+import numpy as np
 import requests
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -164,20 +165,80 @@ class CrimeDataLoader:
         return info
 
 
+    def generate_synthetic_data(self, n_samples: int = 1000) -> pd.DataFrame:
+        """
+        Generate synthetic crime data for development/testing
+        
+        Args:
+            n_samples: Number of samples to generate
+            
+        Returns:
+            DataFrame with synthetic crime data
+        """
+        logger.info(f"Generating {n_samples} synthetic crime records...")
+        
+        # Indian cities with approx lat/lon
+        cities = {
+            "Mumbai": (19.0760, 72.8777),
+            "Delhi": (28.7041, 77.1025),
+            "Bangalore": (12.9716, 77.5946),
+            "Hyderabad": (17.3850, 78.4867),
+            "Chennai": (13.0827, 80.2707),
+            "Kolkata": (22.5726, 88.3639),
+        }
+        
+        data = []
+        start_date = pd.Timestamp("2023-01-01")
+        end_date = pd.Timestamp("2023-12-31")
+        
+        for _ in range(n_samples):
+            city_name = np.random.choice(list(cities.keys()))
+            base_lat, base_lon = cities[city_name]
+            
+            # Add some random noise to coordinates to simulate different locations in the city
+            # ~0.1 degrees is roughly 11km
+            lat = base_lat + np.random.normal(0, 0.05)
+            lon = base_lon + np.random.normal(0, 0.05)
+            
+            # Random date and time
+            random_days = np.random.randint(0, (end_date - start_date).days)
+            date = start_date + pd.Timedelta(days=random_days)
+            hour = np.random.randint(0, 24)
+            date = date + pd.Timedelta(hours=hour)
+            
+            # Crime types with different probabilities
+            crime_types = ["Theft", "Assault", "Burglary", "Vandalism", "Fraud", "Harassment"]
+            crime_probs = [0.4, 0.2, 0.15, 0.1, 0.1, 0.05]
+            crime_type = np.random.choice(crime_types, p=crime_probs)
+            
+            data.append({
+                "date": date,
+                "city": city_name,
+                "latitude": lat,
+                "longitude": lon,
+                "crime_type": crime_type,
+                "severity": np.random.randint(1, 6) # 1 (Low) to 5 (High)
+            })
+            
+        df = pd.DataFrame(data)
+        
+        # Save synthetic data
+        output_path = self.data_dir / "synthetic_crime_data.csv"
+        df.to_csv(output_path, index=False)
+        logger.info(f"Saved synthetic data to {output_path}")
+        
+        return df
+
 def main():
     """Example usage"""
     loader = CrimeDataLoader()
     
-    # Load datasets
-    print("Loading crime datasets...")
-    datasets = loader.load_all_datasets()
-    
-    for name, df in datasets.items():
-        print(f"\n{name}:")
-        print(f"  Shape: {df.shape}")
-        print(f"  Columns: {df.columns.tolist()[:5]}...")  # First 5 columns
-        print(f"  Sample:\n{df.head(2)}")
-
+    # Generate synthetic data for testing
+    print("Generating synthetic data...")
+    import numpy as np # Import locally for the script
+    df_synthetic = loader.generate_synthetic_data(n_samples=2000)
+    print(f"Synthetic Data Shape: {df_synthetic.shape}")
+    print(df_synthetic.head())
 
 if __name__ == "__main__":
     main()
