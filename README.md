@@ -2,11 +2,6 @@
 
 **A geospatial machine learning system that analyzes historical crime data from India and predicts high-risk zones using advanced ML models and interactive visualizations.**
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
-![React](https://img.shields.io/badge/React-18+-61DAFB.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-
 ---
 
 ## 🎯 Problem Statement
