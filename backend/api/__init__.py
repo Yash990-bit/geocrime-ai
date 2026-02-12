@@ -112,3 +112,28 @@ def get_analytics():
         "crime_types": types.to_dict(orient="records"),
         "daily_trends": daily.to_dict(orient="records")
     }
+
+@router.get("/live-feed")
+def get_live_feed():
+    """Simulate live incoming crime reports"""
+    import random
+    from datetime import datetime
+
+    # Simulation Config
+    center_lat, center_lon = 28.7041, 77.1025 # Delhi
+    crime_types = ["Theft", "Assault", "Burglary", "Vandalism", "Fraud", "Harassment"]
+    
+    # Generate 1-2 random events
+    events = []
+    if random.random() > 0.3: # 70% chance of new event
+        count = random.randint(1, 2)
+        for _ in range(count):
+            events.append({
+                "latitude": center_lat + random.uniform(-0.1, 0.1),
+                "longitude": center_lon + random.uniform(-0.1, 0.1),
+                "crime_type": random.choice(crime_types),
+                "severity": random.randint(1, 5),
+                "timestamp": datetime.now().isoformat()
+            })
+            
+    return events
