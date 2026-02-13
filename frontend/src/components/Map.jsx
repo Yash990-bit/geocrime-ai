@@ -15,33 +15,7 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Sub-component to add pulsing effect for new points
-const LiveEventsLayer = ({ events }) => {
-    return (
-        <>
-            {events.map((event, idx) => (
-                <CircleMarker
-                    key={`live-${idx}-${event.timestamp}`}
-                    center={[event.latitude, event.longitude]}
-                    radius={10}
-                    pathOptions={{
-                        color: 'red',
-                        fillColor: 'red',
-                        fillOpacity: 0.8,
-                        className: 'pulsing-marker' // Custom CSS class
-                    }}
-                >
-                    <Popup>
-                        <strong>🔴 LIVE REPORT</strong><br />
-                        Type: {event.crime_type}<br />
-                        Severity: {event.severity}<br />
-                        Time: {new Date(event.timestamp).toLocaleTimeString()}
-                    </Popup>
-                </CircleMarker>
-            ))}
-        </>
-    );
-};
+
 
 const HeatmapLayer = ({ data }) => {
     return (
@@ -50,15 +24,19 @@ const HeatmapLayer = ({ data }) => {
                 <CircleMarker
                     key={idx}
                     center={[point.latitude, point.longitude]}
-                    radius={5}
+                    radius={6}
                     pathOptions={{
-                        color: point.severity > 3 ? 'red' : 'orange',
-                        fillColor: point.severity > 3 ? 'red' : 'orange',
-                        fillOpacity: 0.6
+                        color: point.severity > 3 ? '#f43f5e' : '#10b981',
+                        fillColor: point.severity > 3 ? '#f43f5e' : '#10b981',
+                        fillOpacity: 0.7,
+                        weight: 1
                     }}
                 >
                     <Popup>
-                        Crime Severity: {point.severity}
+                        <div className="font-mono text-xs">
+                            <span className="font-bold uppercase block mb-1">Threat Level {point.severity}</span>
+                            <span className="text-slate-400">Classification: Sector {point.type || 'Alpha'}</span>
+                        </div>
                     </Popup>
                 </CircleMarker>
             ))}
@@ -77,13 +55,13 @@ const RecenterMap = ({ center }) => {
     return null;
 };
 
-const MapComponent = ({ heatmapData, liveEvents, center }) => {
+const MapComponent = ({ heatmapData, center }) => {
     const [hotspots, setHotspots] = useState([]);
 
     useEffect(() => {
         const fetchHotspots = async () => {
             try {
-                const hotRes = await axios.get('http://localhost:8000/api/hotspots');
+                const hotRes = await axios.get('/api/hotspots');
                 setHotspots(hotRes.data.clusters);
             } catch (error) {
                 console.error("Error fetching hotspots:", error);
@@ -93,7 +71,6 @@ const MapComponent = ({ heatmapData, liveEvents, center }) => {
     }, []);
 
     const safeHeatmapData = heatmapData || [];
-    const safeLiveEvents = liveEvents || [];
     const defaultCenter = [20.5937, 78.9629]; // India center
 
     return (
@@ -102,7 +79,7 @@ const MapComponent = ({ heatmapData, liveEvents, center }) => {
 
             {/* Base: Satellite Imagery */}
             <TileLayer
-                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                attribution='Tiles &copy; Esri'
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
 
@@ -118,22 +95,23 @@ const MapComponent = ({ heatmapData, liveEvents, center }) => {
                 <CircleMarker
                     key={`cluster-${idx}`}
                     center={[cluster.latitude, cluster.longitude]}
-                    radius={cluster.count / 5}
+                    radius={Math.min(cluster.count * 2, 40)}
                     pathOptions={{
-                        color: 'purple',
-                        fillColor: 'purple',
-                        fillOpacity: 0.3
+                        color: '#10b981',
+                        fillColor: '#10b981',
+                        fillOpacity: 0.15,
+                        weight: 2,
+                        dashArray: '5, 10'
                     }}
                 >
                     <Popup>
-                        <strong>Hotspot Cluster</strong><br />
-                        Crimes: {cluster.count}
+                        <div className="font-mono text-xs">
+                            <strong className="text-indigo-400 block mb-1 uppercase tracking-tighter">Hotspot Nexus</strong>
+                            Events: {cluster.count}
+                        </div>
                     </Popup>
                 </CircleMarker>
             ))}
-
-            {/* Live Events Layer */}
-            <LiveEventsLayer events={safeLiveEvents} />
         </MapContainer>
     );
 };
