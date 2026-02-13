@@ -47,10 +47,16 @@ const HeatmapLayer = ({ data }) => {
 // Sub-component to handle map view updates
 const RecenterMap = ({ center }) => {
     const map = useMap();
+    const lastCentered = React.useRef(null);
+
     useEffect(() => {
-        if (center) {
-            map.setView(center, 14); // Zoom level 14 for detailed satellite view
-        }
+        if (!center) return;
+
+        const centerId = `${center[0]},${center[1]}`;
+        if (lastCentered.current === centerId) return;
+
+        map.setView(center, 14);
+        lastCentered.current = centerId;
     }, [center, map]);
     return null;
 };

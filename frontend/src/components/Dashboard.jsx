@@ -91,6 +91,12 @@ const Dashboard = () => {
         }
     };
 
+    // Memoized center to prevent unnecessary map resets
+    const memoizedCenter = React.useMemo(() => {
+        if (!hasSearched) return null;
+        return [formData.latitude, formData.longitude];
+    }, [hasSearched, formData.latitude, formData.longitude]);
+
     // --- LANDING PAGE VIEW ---
     if (!hasSearched) {
         return (
@@ -169,6 +175,7 @@ const Dashboard = () => {
             </div>
         );
     }
+
 
     // --- MAIN DASHBOARD VIEW ---
     return (
@@ -319,7 +326,7 @@ const Dashboard = () => {
 
                 {/* Right Column: Tactical Map (Span 8) */}
                 <div className="lg:col-span-8 glass-card p-2 rounded-3xl shadow-xl h-[700px] flex flex-col relative group overflow-hidden border border-slate-100 bg-white">
-                    <div className="absolute top-6 left-6 z-[400] bg-white/90 backdrop-blur-xl px-4 py-2.5 rounded-xl border border-slate-100 pointer-events-none shadow-lg">
+                    <div className="absolute top-6 right-6 z-[400] bg-white/90 backdrop-blur-xl px-4 py-2.5 rounded-xl border border-slate-100 pointer-events-none shadow-lg">
                         <h2 className="text-xs font-extrabold text-slate-900 flex items-center tracking-widest uppercase">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mr-3 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                             Tactical HUD Active
@@ -328,7 +335,7 @@ const Dashboard = () => {
 
                     <MapComponent
                         heatmapData={mapData}
-                        center={hasSearched ? [formData.latitude, formData.longitude] : null}
+                        center={memoizedCenter}
                     />
                 </div>
             </div>
