@@ -9,6 +9,7 @@ import { Activity, BarChart2, Calendar } from 'lucide-react';
 
 const AnalyticsDashboard = ({ location }) => {
     const [data, setData] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -18,26 +19,43 @@ const AnalyticsDashboard = ({ location }) => {
                     url += `?lat=${location.lat}&lon=${location.lon}`;
                 }
                 const response = await axios.get(url);
-                setData(response.data);
-            } catch (error) {
-                console.error("Failed to fetch analytics:", error);
+                if (response.data) {
+                    setData(response.data);
+                    setError(null);
+                }
+            } catch (err) {
+                console.error("Failed to fetch analytics:", err);
+                setError("Data Synchronization Offline");
             }
         };
         fetchAnalytics();
     }, [location]);
 
-    if (!data) return (
-        <div className="p-20 flex flex-col items-center justify-center space-y-6">
-            <div className="w-16 h-16 border-4 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+    if (error) return (
+        <div className="p-20 flex flex-col items-center justify-center space-y-6 bg-red-50/50 rounded-3xl border border-red-100">
+            <div className="p-4 bg-red-100 rounded-full text-red-600">
+                <BarChart2 className="size-8" />
+            </div>
             <div className="text-center">
-                <p className="font-sans text-sm font-bold text-slate-900 tracking-tight">Syncing Intelligence</p>
-                <p className="text-xs text-slate-500 mt-1">Retrieving centralized geospatial statistics...</p>
+                <p className="font-sans text-sm font-bold text-red-900 tracking-tight">{error}</p>
+                <p className="text-xs text-red-500 mt-1">Check backend connectivity or network logs.</p>
             </div>
         </div>
     );
 
     return (
-        <div className="mt-16 space-y-12">
+        <div className="mt-16 space-y-12 relative min-h-[500px]">
+            {/* Loading Overlay */}
+            {!data && !error && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center space-y-6 bg-white/60 backdrop-blur-sm rounded-3xl transition-all duration-500">
+                    <div className="w-16 h-16 border-4 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+                    <div className="text-center">
+                        <p className="font-sans text-sm font-bold text-slate-900 tracking-tight text-shadow-sm">Syncing Intelligence</p>
+                        <p className="text-xs text-slate-500 mt-1">Updating geospatial statistics...</p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-end justify-between border-b border-slate-100 pb-8">
                 <div>
                     <div className="flex items-center space-x-3 mb-2">
@@ -54,7 +72,6 @@ const AnalyticsDashboard = ({ location }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
                 {/* Hourly Trends */}
                 <div className="glass-card p-10 group bg-white shadow-sm border-slate-100">
                     <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-10 flex items-center">
@@ -62,7 +79,7 @@ const AnalyticsDashboard = ({ location }) => {
                     </h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data.hourly_trends}>
+                            <LineChart data={data?.hourly_trends || []}>
                                 <defs>
                                     <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
@@ -102,6 +119,7 @@ const AnalyticsDashboard = ({ location }) => {
                                     stroke="#10b981"
                                     fill="url(#lineGradient)"
                                     strokeWidth={3}
+                                    isAnimationActive={false}
                                 />
                                 <Line
                                     type="monotone"
@@ -110,20 +128,21 @@ const AnalyticsDashboard = ({ location }) => {
                                     strokeWidth={4}
                                     dot={{ r: 0 }}
                                     activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                                    isAnimationActive={false}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Crime Types */}
+                {/* Event Classification */}
                 <div className="glass-card p-10 group bg-white shadow-sm border-slate-100">
                     <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-10 flex items-center">
                         <BarChart2 className="mr-3 size-4 text-emerald-500" /> Event Classification
                     </h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data.crime_types} layout="vertical">
+                            <BarChart data={data?.crime_types || []} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                                 <XAxis type="number" stroke="#94a3b8" fontSize={10} fontFamily="JetBrains Mono" axisLine={false} tickLine={false} />
                                 <YAxis
@@ -145,20 +164,20 @@ const AnalyticsDashboard = ({ location }) => {
                                         boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
                                     }}
                                 />
-                                <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} barSize={24} />
+                                <Bar dataKey="count" fill="#10b981" radius={[0, 8, 8, 0]} barSize={24} isAnimationActive={false} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Daily Trends (Radar) */}
+                {/* Weekly Distribution (Radar) */}
                 <div className="glass-card p-10 group bg-white shadow-sm border-slate-100">
                     <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-10 flex items-center">
                         <Calendar className="mr-3 size-4 text-emerald-500" /> Weekly Distribution
                     </h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data.daily_trends}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data?.daily_trends || []}>
                                 <PolarGrid stroke="#f1f5f9" />
                                 <PolarAngleAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#f1f5f9" tick={false} />
@@ -169,6 +188,7 @@ const AnalyticsDashboard = ({ location }) => {
                                     fill="#10b981"
                                     fillOpacity={0.1}
                                     strokeWidth={3}
+                                    isAnimationActive={false}
                                 />
                                 <Tooltip
                                     contentStyle={{
@@ -182,7 +202,6 @@ const AnalyticsDashboard = ({ location }) => {
                         </ResponsiveContainer>
                     </div>
                 </div>
-
             </div>
         </div>
     );

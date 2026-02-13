@@ -41,10 +41,10 @@ const Dashboard = () => {
 
         const fetchMapData = async () => {
             try {
-                let url = 'http://localhost:8000/api/heatmap-data?';
-                if (filters.crimeType !== 'All') url += `crime_type = ${filters.crimeType}& `;
-                if (filters.startDate) url += `start_date = ${filters.startDate}& `;
-                if (filters.endDate) url += `end_date = ${filters.endDate} `;
+                let url = `/api/heatmap-data?lat=${formData.latitude}&lon=${formData.longitude}&`;
+                if (filters.crimeType !== 'All') url += `crime_type=${filters.crimeType}&`;
+                if (filters.startDate) url += `start_date=${filters.startDate}&`;
+                if (filters.endDate) url += `end_date=${filters.endDate}`;
 
                 const response = await axios.get(url);
                 setMapData(response.data);
@@ -264,26 +264,28 @@ const Dashboard = () => {
                         </div>
 
                         {prediction && (
-                            <div className={`mt-10 p-6 rounded-2xl border backdrop-blur-md animate-in zoom-in-95 duration-500 relative ${prediction.risk_level === 'High Risk'
-                                ? 'bg-red-500/5 border-red-500/20 text-red-200'
-                                : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-200'
+                            <div className={`mt-10 p-7 rounded-3xl border animate-in zoom-in-95 duration-500 relative transition-all ${prediction.risk_level === 'High Risk'
+                                ? 'bg-red-50 border-red-200 text-red-900 shadow-sm shadow-red-100'
+                                : 'bg-emerald-50 border-emerald-200 text-emerald-900 shadow-sm shadow-emerald-100'
                                 }`}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center font-bold text-xs uppercase tracking-[0.2em]">
-                                        <div className={`mr-3 p-1.5 rounded-md ${prediction.risk_level === 'High Risk' ? 'bg-red-500/20' : 'bg-emerald-500/20'}`}>
-                                            <AlertTriangle className={`size-4 ${prediction.risk_level === 'High Risk' ? 'text-red-400' : 'text-emerald-400'}`} />
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className="flex items-center font-extrabold text-sm uppercase tracking-widest">
+                                        <div className={`mr-4 p-2 rounded-xl ${prediction.risk_level === 'High Risk' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                            <AlertTriangle className="size-5" />
                                         </div>
                                         {prediction.risk_level}
                                     </div>
-                                    <span className="text-[10px] uppercase font-mono text-slate-500">Confidence</span>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[10px] uppercase font-bold text-slate-600 tracking-tighter">Confidence Index</span>
+                                        <span className="text-base font-mono font-black tabular-nums text-slate-900">{(prediction.risk_score * 100).toFixed(1)}%</span>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-black/40 rounded-full h-3 mb-2 p-0.5 border border-white/5">
+                                <div className="w-full bg-slate-200/50 rounded-full h-3.5 mb-2 p-0.5 border border-slate-300/30 overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,255,255,0.1)] ${prediction.risk_level === 'High Risk' ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-emerald-500 to-teal-400'}`}
+                                        className={`h-full rounded-full transition-all duration-1000 ${prediction.risk_level === 'High Risk' ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-emerald-500 to-teal-400'}`}
                                         style={{ width: `${prediction.risk_score * 100}%` }}
                                     ></div>
                                 </div>
-                                <p className="text-right text-sm font-mono font-bold tracking-tighter">{(prediction.risk_score * 100).toFixed(1)}%</p>
                             </div>
                         )}
                     </div>
@@ -341,7 +343,7 @@ const Dashboard = () => {
             </div>
 
             {/* Analytics Section */}
-            <div className="animate-in slide-in-from-bottom-8 duration-1000 delay-300">
+            <div className="mt-12">
                 <AnalyticsDashboard
                     location={hasSearched ? { lat: formData.latitude, lon: formData.longitude } : null}
                 />
