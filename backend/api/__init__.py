@@ -84,12 +84,28 @@ def get_heatmap_data(
     return df[["latitude", "longitude", "severity"]].to_dict(orient="records")
 
 @router.get("/analytics")
-def get_analytics():
-    """Return aggregated crime statistics"""
+def get_analytics(lat: float = None, lon: float = None):
+    """Return aggregated crime statistics, optionally filtered by location"""
     if clustered_data.empty:
         return {}
         
     df = clustered_data.copy()
+    
+    # Filter by location if provided (approx 5km radius ~ 0.05 degrees)
+    if lat is not None and lon is not None:
+        df = df[
+            (df["latitude"] >= lat - 0.05) & (df["latitude"] <= lat + 0.05) &
+            (df["longitude"] >= lon - 0.05) & (df["longitude"] <= lon + 0.05)
+        ]
+        
+    # If no data found for location, warn but don't crash (return empty stats)
+    if df.empty:
+         return {
+            "hourly_trends": [],
+            "crime_types": [],
+            "daily_trends": []
+        }
+
     df['date'] = pd.to_datetime(df['date'])
     
     # 1. Hourly Trends
@@ -114,23 +130,24 @@ def get_analytics():
     }
 
 @router.get("/live-feed")
-def get_live_feed():
-    """Simulate live incoming crime reports"""
+def get_live_feed(lat: float = 28.7041, lon: float = 77.1025):
+    """Simulate live incoming crime reports near a specific location"""
     import random
     from datetime import datetime
 
     # Simulation Config
-    center_lat, center_lon = 28.7041, 77.1025 # Delhi
+    center_lat, center_lon = lat, lon
     crime_types = ["Theft", "Assault", "Burglary", "Vandalism", "Fraud", "Harassment"]
     
     # Generate 1-2 random events
     events = []
-    if random.random() > 0.3: # 70% chance of new event
-        count = random.randint(1, 2)
+    if random.random() > 0.2: # 80% chance of new event (High Activity)
+        count = random.randint(1, 3)
         for _ in range(count):
+            # Generate within ~5km radius (approx 0.05 degrees)
             events.append({
-                "latitude": center_lat + random.uniform(-0.1, 0.1),
-                "longitude": center_lon + random.uniform(-0.1, 0.1),
+                "latitude": center_lat + random.uniform(-0.05, 0.05),
+                "longitude": center_lon + random.uniform(-0.05, 0.05),
                 "crime_type": random.choice(crime_types),
                 "severity": random.randint(1, 5),
                 "timestamp": datetime.now().isoformat()

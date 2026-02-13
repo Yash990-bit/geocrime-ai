@@ -66,7 +66,18 @@ const HeatmapLayer = ({ data }) => {
     );
 };
 
-const MapComponent = ({ heatmapData, liveEvents }) => {
+// Sub-component to handle map view updates
+const RecenterMap = ({ center }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (center) {
+            map.setView(center, 14); // Zoom level 14 for detailed satellite view
+        }
+    }, [center, map]);
+    return null;
+};
+
+const MapComponent = ({ heatmapData, liveEvents, center }) => {
     const [hotspots, setHotspots] = useState([]);
 
     useEffect(() => {
@@ -83,13 +94,23 @@ const MapComponent = ({ heatmapData, liveEvents }) => {
 
     const safeHeatmapData = heatmapData || [];
     const safeLiveEvents = liveEvents || [];
+    const defaultCenter = [20.5937, 78.9629]; // India center
 
     return (
-        <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={center || defaultCenter} zoom={center ? 14 : 5} style={{ height: '100%', width: '100%' }}>
+            <RecenterMap center={center} />
+
+            {/* Base: Satellite Imagery */}
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
+
+            {/* Overlay: Labels & Boundaries */}
+            <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            />
+
             <HeatmapLayer data={safeHeatmapData} />
 
             {/* Hotspots */}

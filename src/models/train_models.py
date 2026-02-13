@@ -57,7 +57,44 @@ def main():
     
     clf_model = RiskClassificationModel()
     clf_model.train(X_train, y_train)
-    clf_model.evaluate(X_test, y_test)
+    
+    # --- EVALUATION ---
+    try:
+        from sklearn.metrics import classification_report, confusion_matrix
+        import json
+        
+        print("\n" + "="*40)
+        print("🤖 MODEL EVALUATION REPORT")
+        print("="*40)
+        
+        # Predictions
+        y_pred = clf_model.predict(X_test)
+        
+        # 1. Classification Report (Precision, Recall, F1)
+        report_dict = classification_report(y_test, y_pred, output_dict=True)
+        print("\n📊 Detailed Metrics:")
+        print(classification_report(y_test, y_pred))
+        
+        # 2. Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+        print("\n🧩 Confusion Matrix:")
+        print(cm)
+        
+        # Save Metrics to JSON for Documentation/Frontend
+        metrics = {
+            "accuracy": report_dict["accuracy"],
+            "class_high_risk": report_dict.get("High Risk", {}),
+            "class_low_risk": report_dict.get("Low Risk", {}),
+            "confusion_matrix": cm.tolist()
+        }
+        
+        with open("model_metrics.json", "w") as f:
+            json.dump(metrics, f, indent=4)
+            
+        print(f"\n✅ Metrics saved to model_metrics.json")
+    except ImportError:
+        print("⚠️ sklearn not installed, skipping advanced metrics.")
+    
     clf_model.save()
     
     # 4. Train Clustering Model (Hotspot Detection)
