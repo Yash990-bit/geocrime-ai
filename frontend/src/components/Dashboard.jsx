@@ -19,6 +19,8 @@ const Dashboard = () => {
     });
     const [mapData, setMapData] = useState([]);
 
+    const [locationName, setLocationName] = useState('');
+
     // Logic State
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -53,7 +55,7 @@ const Dashboard = () => {
             }
         };
         fetchMapData();
-    }, [filters, hasSearched]);
+    }, [filters, hasSearched, formData.latitude, formData.longitude]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -64,12 +66,13 @@ const Dashboard = () => {
             // Geocoding via Nominatim
             const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}`);
             if (res.data && res.data.length > 0) {
-                const { lat, lon } = res.data[0];
+                const { lat, lon, display_name } = res.data[0];
                 setFormData({
                     ...formData,
                     latitude: parseFloat(lat),
                     longitude: parseFloat(lon)
                 });
+                setLocationName(display_name);
                 setHasSearched(true);
             } else {
                 alert("Location not found. Please try again.");
@@ -338,6 +341,7 @@ const Dashboard = () => {
                     <MapComponent
                         heatmapData={mapData}
                         center={memoizedCenter}
+                        locationName={locationName}
                     />
                 </div>
             </div>

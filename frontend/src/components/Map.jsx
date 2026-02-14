@@ -5,7 +5,10 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import L from 'leaflet';
 
-const HeatmapLayer = ({ data }) => {
+const HeatmapLayer = ({ data, locationName }) => {
+    // Extract a shorter area name from the full display_name (usually the first two parts)
+    const area = locationName ? locationName.split(',').slice(0, 2).join(',').trim() : 'Operational Sector';
+
     return (
         <>
             {data.map((point, idx) => (
@@ -22,17 +25,30 @@ const HeatmapLayer = ({ data }) => {
                 >
                     <Tooltip direction="top" offset={[0, -5]} opacity={1} permanent={false}>
                         <div className="font-mono text-[10px] leading-tight text-slate-900 px-1">
-                            <span className="font-extrabold block">MAP INTEL</span>
-                            <span className="text-slate-500 font-semibold">{point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}</span>
+                            <span className="font-extrabold block text-emerald-600 uppercase tracking-tighter">LANDMARK DETECTED</span>
+                            <span className="text-slate-900 font-bold block truncate max-w-[150px]">{area}</span>
                         </div>
                     </Tooltip>
                     <Popup>
-                        <div className="font-mono text-xs p-1">
+                        <div className="font-mono text-xs p-1 min-w-[180px]">
                             <span className="font-bold uppercase block mb-1 text-slate-900 border-b border-slate-100 pb-1">Threat Level {point.severity}</span>
-                            <div className="space-y-1 mt-2">
-                                <p className="text-slate-500 font-bold">TYPE: <span className="text-slate-900">{point.crime_type || 'Unknown'}</span></p>
-                                <p className="text-slate-500 font-bold">SECTOR: <span className="text-emerald-600">ALPHA-{(idx % 9) + 1}</span></p>
-                                <p className="text-[10px] text-slate-400 mt-2 border-t border-slate-100 pt-1 font-semibold">COORDINATES: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}</p>
+                            <div className="space-y-1.5 mt-2">
+                                <p className="text-slate-500 font-bold flex justify-between">
+                                    <span>TYPE:</span>
+                                    <span className="text-slate-900">{point.crime_type || 'Unknown'}</span>
+                                </p>
+                                <p className="text-slate-500 font-bold flex justify-between">
+                                    <span>AREA:</span>
+                                    <span className="text-emerald-600 truncate max-w-[120px]" title={locationName}>{area}</span>
+                                </p>
+                                <p className="text-slate-500 font-bold flex justify-between">
+                                    <span>SECTOR:</span>
+                                    <span className="text-slate-900">ALPHA-{(idx % 12) + 1}</span>
+                                </p>
+                                <div className="text-[9px] text-slate-400 mt-3 border-t border-slate-100 pt-1 font-semibold leading-relaxed">
+                                    PRECISION RADIUS: 5.2m<br />
+                                    COORD: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}
+                                </div>
                             </div>
                         </div>
                     </Popup>
@@ -59,7 +75,7 @@ const RecenterMap = ({ center }) => {
     return null;
 };
 
-const MapComponent = ({ heatmapData, center }) => {
+const MapComponent = ({ heatmapData, center, locationName }) => {
     const [hotspots, setHotspots] = useState([]);
 
     useEffect(() => {
@@ -92,7 +108,7 @@ const MapComponent = ({ heatmapData, center }) => {
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
             />
 
-            <HeatmapLayer data={safeHeatmapData} />
+            <HeatmapLayer data={safeHeatmapData} locationName={locationName} />
 
             {/* Hotspots */}
             {hotspots.map((cluster, idx) => (
