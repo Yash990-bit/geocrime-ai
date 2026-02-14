@@ -1,21 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
-
 
 const HeatmapLayer = ({ data }) => {
     return (
@@ -32,10 +20,20 @@ const HeatmapLayer = ({ data }) => {
                         weight: 1
                     }}
                 >
+                    <Tooltip direction="top" offset={[0, -5]} opacity={1} permanent={false}>
+                        <div className="font-mono text-[10px] leading-tight text-slate-900 px-1">
+                            <span className="font-extrabold block">MAP INTEL</span>
+                            <span className="text-slate-500 font-semibold">{point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}</span>
+                        </div>
+                    </Tooltip>
                     <Popup>
-                        <div className="font-mono text-xs">
-                            <span className="font-bold uppercase block mb-1">Threat Level {point.severity}</span>
-                            <span className="text-slate-400">Classification: Sector {point.type || 'Alpha'}</span>
+                        <div className="font-mono text-xs p-1">
+                            <span className="font-bold uppercase block mb-1 text-slate-900 border-b border-slate-100 pb-1">Threat Level {point.severity}</span>
+                            <div className="space-y-1 mt-2">
+                                <p className="text-slate-500 font-bold">TYPE: <span className="text-slate-900">{point.crime_type || 'Unknown'}</span></p>
+                                <p className="text-slate-500 font-bold">SECTOR: <span className="text-emerald-600">ALPHA-{(idx % 9) + 1}</span></p>
+                                <p className="text-[10px] text-slate-400 mt-2 border-t border-slate-100 pt-1 font-semibold">COORDINATES: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}</p>
+                            </div>
                         </div>
                     </Popup>
                 </CircleMarker>
