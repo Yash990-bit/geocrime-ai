@@ -1,16 +1,25 @@
 
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException
 from backend.schemas import PredictionRequest, PredictionResponse, HotspotResponse
 from src.models.classification_model import RiskClassificationModel
 from src.models.clustering_model import HotspotClusteringModel
+from src.models.anomaly_detector import AnomalyDetector
+from src.features.risk_engine import RiskEngine
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
 router = APIRouter()
 
-# Load models (Global valid for simple use case; for prod use lifespan)
+# Load models
 risk_model = RiskClassificationModel()
 risk_model.load()
+
+anomaly_detector = AnomalyDetector()
+# anomaly_detector.load() # Optional: load if trained
+
+risk_engine = RiskEngine(hotspot_model=None)
 
 # Load clustered data for hotspots
 try:
@@ -201,4 +210,21 @@ def get_live_feed(lat: float = 28.7041, lon: float = 77.1025):
                 "timestamp": datetime.now().isoformat()
             })
             
-    return events
+@router.get("/risk-index")
+def get_risk_index(lat: float, lon: float):
+    """Calculate real-time risk index for a location"""
+    return risk_engine.calculate_score(lat, lon)
+
+@router.post("/detect-anomalies")
+def detect_anomalies(data: List[Dict[str, Any]]):
+    """Identify unusual incidents in a set of reports"""
+    if not data:
+        return {"anomalies": []}
+        
+    df = pd.DataFrame(data)
+    # Use Lat, Long, and Severity for anomaly detection
+    features = df[["latitude", "longitude", "severity"]].values
+    labels = anomaly_detector.fit_predict(features)
+    
+    anomalies = [data[i] for i in range(len(labels)) if labels[i] == -1]
+    return {"anomalies": anomalies}

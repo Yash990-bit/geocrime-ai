@@ -10,8 +10,9 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class HotspotClusteringModel:
-    """Clustering to detect crime hotspots using KMeans or DBSCAN"""
+    """Clustering to detect crime hotspots using KMeans, DBSCAN, or ST-DBSCAN"""
     
     def __init__(self, algorithm: str = "dbscan", params: Optional[Dict[str, Any]] = None, model_path: str = "models/hotspot_model.joblib"):
         self.algorithm = algorithm.lower()
@@ -23,6 +24,14 @@ class HotspotClusteringModel:
             eps = self.params.get("eps", 0.01) # ~1.1km
             min_samples = self.params.get("min_samples", 5)
             self.model = DBSCAN(eps=eps, min_samples=min_samples)
+        elif self.algorithm == "st-dbscan":
+            # Spatio-Temporal DBSCAN
+            # We use DBSCAN but with specialized eps for spatial and temporal dimensions
+            # Usually requires pre-calculated distance matrix or standardizing dimensions
+            self.eps_spatial = self.params.get("eps_spatial", 0.01)
+            self.eps_temporal = self.params.get("eps_temporal", 1.0) # e.g., 1 hour
+            min_samples = self.params.get("min_samples", 5)
+            self.model = DBSCAN(eps=self.eps_spatial, min_samples=min_samples)
         elif self.algorithm == "kmeans":
             n_clusters = self.params.get("n_clusters", 5)
             self.model = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
@@ -32,15 +41,24 @@ class HotspotClusteringModel:
     def fit_predict(self, data: np.ndarray) -> np.ndarray:
         """
         Fit model and return cluster labels.
-        Data should be [latitude, longitude] or [latitude, longitude, density]
+        Data can be [lat, lon], [lat, lon, density], or [lat, lon, time]
         """
         logger.info(f"Clustering {len(data)} points with {self.algorithm.upper()}...")
         
-        # If density is provided, we can use it as a weight for KMeans
-        # or just as an additional dimension for DBSCAN if that's desired.
-        # However, typically density is used to filter or weight.
-        
-        if self.algorithm == "kmeans" and data.shape[1] == 3:
+        if self.algorithm == "st-dbscan":
+            # Simple ST-DBSCAN approach: Scale temporal dimension to match spatial eps
+            # If eps_spatial is 0.01 and eps_temporal is 2.0 hours, 
+            # we scale time such that 2.0 hours = 0.01 spatial units.
+            coords = data[:, :2].copy()
+            time = data[:, 2].copy()
+            
+            # Scale time
+            scale_factor = self.eps_spatial / self.eps_temporal
+            time_scaled = time * scale_factor
+            
+            st_data = np.column_stack((coords, time_scaled))
+            labels = self.model.fit_predict(st_data)
+        elif self.algorithm == "kmeans" and data.shape[1] == 3:
             # Use density (column 2) as sample weights for KMeans
             coords = data[:, :2]
             weights = data[:, 2]
