@@ -19,11 +19,11 @@ GeoCrime AI solves these problems by analyzing historical crime data from India'
 
 ✅ **Real Indian Crime Data** - Uses official NCRB datasets from data.gov.in  
 ✅ **ML-Powered Predictions** - Random Forest classification for risk assessment  
-✅ **Geospatial Clustering** - DBSCAN algorithm for hotspot detection  
-✅ **Interactive Heatmaps** - Folium-based visualization of crime density  
-✅ **Time-Series Analysis** - Predict future crime trends  
-✅ **REST API** - FastAPI backend for real-time predictions  
-✅ **Modern Dashboard** - React frontend with interactive controls  
+✅ **Spatio-Temporal Clustering** - Advanced ST-DBSCAN for emerging hotspots  
+✅ **Anomaly Detection** - Isolation Forest for flagging unusual crime incidents  
+✅ **Dynamic Risk Index** - Real-time safety scoring based on live & historical data  
+✅ **Interactive Maps** - Leaflet-based visualization of crime density  
+✅ **REST API** - FastAPI backend with advanced predictive endpoints  
 
 ---
 
@@ -133,11 +133,17 @@ Visit `http://localhost:5173` to see the dashboard!
 **Objective**: Identify crime hotspot clusters
 
 **Algorithms**:
-- **KMeans** - Find N hotspot zones
-- **DBSCAN** ⭐ - Density-based clustering for geospatial data
+- **ST-DBSCAN** ⭐ - Spatio-Temporal clustering for emerging hotspots
+- **DBSCAN** - Density-based clustering for irregular geospatial shapes
+- **Weighted KMeans** - Partitioning the map into exactly $N$ strategic zones
 
-**Features**: Latitude, longitude, crime density  
-**Output**: Cluster labels for each location
+**Features**: Latitude, longitude, date/time, crime density  
+**Output**: Cluster labels and emerging threat alerts
+
+### 3. Anomaly Detection (Outlier Detection)
+**Objective**: Flag unusual or high-risk incidents
+**Algorithm**: Isolation Forest
+**Why**: Automatically identifies incidents that deviate from historical patterns (e.g., high-severity crime in a low-risk zone).
 
 ### 3. Time Series Model (Future Prediction)
 **Objective**: Forecast crime trends
@@ -167,12 +173,12 @@ Interactive Folium heatmap showing crime density across India with:
 ## 🔌 API Endpoints
 
 ```
-GET  /health              # Health check
-GET  /api/crime-stats     # Get crime statistics
-POST /api/predict         # Predict risk level for location
-GET  /api/hotspots        # Get current hotspot clusters
-GET  /api/heatmap-data    # Get data for heatmap visualization
-GET  /api/trends          # Get time-series trends
+GET  /api/risk-index     # Calculate real-time risk index
+POST /api/detect-anomalies # Detect outliers in crime reports
+POST /api/predict          # Predict risk level for location
+GET  /api/hotspots         # Get current hotspot clusters
+GET  /api/analytics        # Get aggregated crime statistics
+GET  /api/live-feed        # Simulate incoming crime reports
 ```
 
 ---
@@ -194,11 +200,11 @@ GET  /api/trends          # Get time-series trends
 > "I built a geospatial machine learning system that analyzes historical crime data from India's National Crime Records Bureau and predicts high-risk zones using Random Forest classification and DBSCAN clustering. The system visualizes crime hotspots through interactive Folium heatmaps and provides a FastAPI backend with a React dashboard for real-time predictions."
 
 ### Technical Highlights
-1. **Data Engineering**: Processed 4+ years of NCRB data covering 28 states
-2. **Feature Engineering**: Created temporal and geospatial features
-3. **ML Models**: Compared Logistic Regression, Random Forest, and XGBoost
-4. **Geospatial Analysis**: Used DBSCAN for density-based hotspot detection
-5. **Full-Stack**: FastAPI backend + React frontend with interactive maps
+1. **Data Engineering**: Processed 4+ years of NCRB data with temporal feature scaling
+2. **Feature Engineering**: Implemented weighted features for spatial clustering
+3. **ML Models**: Used Random Forest for risk and Isolation Forest for Anomaly Detection
+4. **Geospatial Analysis**: Advanced ST-DBSCAN for spatio-temporal hotspot detection
+5. **Full-Stack Logic**: Dynamic Risk Index calculating real-time safety scores
 
 ### Challenges Solved
 - Geocoding Indian cities/districts without precise coordinates
